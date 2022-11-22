@@ -5,7 +5,7 @@ class Model():
     
     #general model class which contains netork architecture and forwad and train calls given 'x' as datapoint. Train functionn will update weights of each layer.
 
-    def __init__(self, num_layers = 3, num_features = [2,8,8,2]):
+    def __init__(self, num_layers = 3, num_features = [2,2,2,2]):
 
         #define netowork architecture and layers        
         
@@ -16,19 +16,37 @@ class Model():
         self.L2 = Linear(features_in=num_features[1], features_out=num_features[2]) #hidden
         self.L3 = Linear(features_in=num_features[2], features_out=num_features[3]) #output
 
-        self.learning_rate = 0.003
+        self.learning_rate = 0.03
 
     def forward(self,x):
         
         #forward pass on the data
-        out1 = self.L1.run(x)
-        out2 = self.Activation.RelU(out1)
-        out3 = self.L2.run(out2)
-        out4 = self.Activation.RelU(out3)
-        out5 = self.L3.run(out4)
-        out6 = self.Activation.Sigmoid(out5)
+        out = self.L1.run(x)
+        out = self.Activation.RelU(out)
+        out = self.L2.run(out)
+        out = self.Activation.RelU(out)
+        out = self.L3.run(out)
+        out = self.Activation.Sigmoid(out)
+
+        return out
+
+    def backprop_gradients(self,x,y):
+        #calculate gradients with back pass.
+
+        #for now harcode the derivatives of RelU and loss and network architecture
+        current_loss = self.Loss.loss(self.forward(x), y)
+
+        # loss -> (y-x)^2, derivative -> 2(y-x)
+        # sigmoid sig(x), derivative -> sig(x) * (1-sig(x))
+        # RelU max(0,x), derivative -> 1 if x>0, else 0
         
-        return out6
+        # L3
+
+        # L2
+
+        # L1
+
+        pass
 
     def train(self,x,y):
         #this function will take data and work on the gradients of the layers. Gradients are stored in the Linear layer class.
@@ -98,11 +116,11 @@ class Model():
             self.L3.biases[i] -= h
 
         self.L1.weights -= self.L1.weights_gradients*self.learning_rate        
-        self.L2.weights -= self.L2.weights_gradients*self.learning_rate
+        # self.L2.weights -= self.L2.weights_gradients*self.learning_rate
         self.L3.weights -= self.L3.weights_gradients*self.learning_rate
         
         self.L1.biases  -= self.L1.biases_gradients*self.learning_rate
-        self.L2.biases  -= self.L2.biases_gradients*self.learning_rate
+        # self.L2.biases  -= self.L2.biases_gradients*self.learning_rate
         self.L3.biases  -= self.L3.biases_gradients*self.learning_rate
 
         return current_loss
@@ -122,8 +140,8 @@ class Linear():
         self.features_in = features_in
         self.features_out = features_out
         
-        self.weights = np.random.randn(self.features_in,self.features_out)-0.5#as a np matrix 1st - features_in, 2nd - features_out
-        self.weights = self.weights / np.sqrt(features_in)
+        self.weights = np.random.randn(self.features_in,self.features_out)#as a np matrix 1st - features_in, 2nd - features_out
+        self.weights = self.weights / (np.sqrt(features_in)*100)
         self.weights.astype(np.float64)
 
         self.biases = np.zeros(self.features_out)
@@ -135,14 +153,22 @@ class Linear():
         self.biases_gradients = np.zeros(self.features_out) #as a np matrix 1st - features_in, 2nd - features_out
         self.biases_gradients.astype(np.float64)
 
+        self.node_values = np.zeros(self.features_out) #to store for gradient descent
+
     def run(self, x): 
     #for each feature in 'x' multiply by relevant weights and add up, then and bias
+
+        #numpy vectorization        
+        output  = np.dot(self.weights.T, x) + self.biases
+
+        # output = np.zeros(self.features_out)
+        # for outgoing in range(self.features_out):
+        #     for arriving, _ in enumerate(x):
+        #         output[outgoing] += x[arriving] * self.weights[arriving, outgoing]    
+        #     output[outgoing] += self.biases[outgoing]      
         
-        output = np.zeros(self.features_out)
-        for outgoing in range(self.features_out):
-            for arriving, _ in enumerate(x):
-                output[outgoing] += x[arriving] * self.weights[arriving, outgoing]    
-            output[outgoing] += self.biases[outgoing]      
+        self.node_values = output
+        
         return output
 
 class Activation():

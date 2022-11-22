@@ -10,14 +10,14 @@ def main():
 
     plt.figure(num=1,figsize=(5, 5))
     target = target_data(shape=32,coverage=75,plot_flag=True)
-    plt.savefig(f"target_data.png",)
+    # plt.savefig(f"target_data.png",)
     # return
     
     model = nn.Model()
 
     t1 = time.time()
     
-    batch_size = 128
+    batch_size = 16
 
     for epoch in range(1,1000):
         
@@ -25,7 +25,7 @@ def main():
             plt.figure(num=2,figsize=(5, 5))
             show_prediction(shape=32,model=model)
 
-            plt.savefig(f"{epoch}.png",)
+            # plt.savefig(f"{epoch}.png",)
 
         shuffle(target)
 
@@ -40,10 +40,9 @@ def main():
             if t_counter % batch_size == 0 and t_counter > 0:
                 running_loss = model.train(inputx,inputy)
                 
-                print(running_loss)
-                
-                inputx = []
-                inputy = []
+        print(running_loss)
+        inputx = []
+        inputy = []
 
     print(time.time()-t1)
 
@@ -97,18 +96,18 @@ def target_data(shape:int, coverage:int, plot_flag:bool) -> list:
     #         xy.append([0,1])
 
     # circle
-    for xy in res:
-        if np.sqrt((xy[0]-0.3)**2 + (xy[1]-0.3)**2) < 0.3:
-            xy.append(np.array([1,0],dtype=np.float64))
-        else:
-            xy.append(np.array([0,1],dtype=np.float64))
-
-    #just line
     # for xy in res:
-    #     if xy[1] > xy[0] + 1:
+    #     if np.sqrt((xy[0]-0.3)**2 + (xy[1]-0.3)**2) < 0.3:
     #         xy.append(np.array([1,0],dtype=np.float64))
     #     else:
     #         xy.append(np.array([0,1],dtype=np.float64))
+
+    # just line
+    for xy in res:
+        if xy[1] > xy[0] + 0.1:
+            xy.append(np.array([1,0],dtype=np.float64))
+        else:
+            xy.append(np.array([0,1],dtype=np.float64))
 
     if plot_flag:
         for x,y,z in res:
