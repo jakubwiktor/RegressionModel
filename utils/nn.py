@@ -16,17 +16,17 @@ class Model():
         self.L2 = Linear(features_in=num_features[1], features_out=num_features[2]) #hidden
         self.L3 = Linear(features_in=num_features[2], features_out=num_features[3]) #output
 
-        self.learning_rate = 0.03
+        self.learning_rate = 0.003
 
     def forward(self,x):
         
         #forward pass on the data
-        out = self.L1.run(x)
-        out = self.Activation.RelU(out)
-        out = self.L2.run(out)
-        out = self.Activation.RelU(out)
-        out = self.L3.run(out)
-        out = self.Activation.Sigmoid(out)
+        # out = self.L1.run(x)
+        # out = self.Activation.RelU(out)
+        # out = self.L2.run(x)
+        # out = self.Activation.RelU(out)
+        out = self.L3.run(x)
+        # out = self.Activation.Sigmoid(out)
 
         return out
 
@@ -34,20 +34,44 @@ class Model():
         #calculate gradients with back pass.
 
         #for now harcode the derivatives of RelU and loss and network architecture
-        current_loss = self.Loss.loss(self.forward(x), y)
+        pred = self.forward(x)
 
         # loss -> (y-x)^2, derivative -> 2(y-x)
         # sigmoid sig(x), derivative -> sig(x) * (1-sig(x))
         # RelU max(0,x), derivative -> 1 if x>0, else 0
-        
+        # weight w*input + b, derivative -> input
         # L3
+        
+        #get derivative of the cost
+        cost_derivative = 2 * (pred-y)
+        # cost_derivative = self.Activation.Sigmoid(cost_derivative)
+        # cost_derivative = cost_derivative * (1-cost_derivative)
 
-        # L2
+        #weight is [fatures_in, features_out]
+        
+        #L3
+        L3_gradientsW = np.zeros((self.L3.features_in,self.L3.features_out))
+        for i in range(len(self.L3.weights)):
+            for j in range(len(self.L3.weights[i])): 
+                L3_gradientsW[i][j] = cost_derivative[j] * x[i] 
 
-        # L1
+        L3_gradientsB = np.zeros(self.L3.features_out)
+        for i in range(len(self.L3.biases)):
+                L3_gradientsB[i] = cost_derivative[i] * 1
 
-        pass
+        self.L3.weights -= L3_gradientsW * self.learning_rate
+        self.L3.biases  -= L3_gradientsB * self.learning_rate
 
+        # self.L2.weights -= L2_gradientsW * self.learning_rate
+        # self.L2.biases  -= L2_gradientsB * self.learning_rate
+
+        # for i in range(len(self.L3.weights)):
+        #     for j in range(len(self.L3.weights[i])): 
+        #         L3_gradients[i][j] = cost_derivative[j] * self.L3.node_values[j]
+ 
+
+        return np.sum(np.power(pred-y,2))
+    
     def train(self,x,y):
         #this function will take data and work on the gradients of the layers. Gradients are stored in the Linear layer class.
         
@@ -57,70 +81,59 @@ class Model():
         #x i input vector with position of datapoint data, y is a class vector
         
         h = 0.000001
-        current_loss = 0
-        for one_x, one_y in zip(x,y):
-            current_loss += self.Loss.loss(self.forward(one_x), one_y)
-        # current_loss = current_loss/len(x)
+        current_loss = self.Loss.loss(self.forward(x), y)
 
         #get gradients for weights and biases
-        for i in range(len(self.L1.weights)):
-            for j in range(len(self.L1.weights[i])):
-                self.L1.weights[i][j] += h
-                new_loss = 0
-                for one_x, one_y in zip(x,y):
-                    new_loss += self.Loss.loss(self.forward(one_x), one_y)
-                # new_loss = new_loss/len(x)
-                self.L1.weights[i][j] -= h
-                self.L1.weights_gradients[i][j] = (new_loss - current_loss)/h
+        # for i in range(len(self.L1.weights)):
+        #     for j in range(len(self.L1.weights[i])):
+        #         self.L1.weights[i][j] += h
+        #         new_loss = 0
+        #         for one_x, one_y in zip(x,y):
+        #             new_loss += self.Loss.loss(self.forward(one_x), one_y)
+        #         # new_loss = new_loss/len(x)
+        #         self.L1.weights[i][j] -= h
+        #         self.L1.weights_gradients[i][j] = (new_loss - current_loss)/h
                 
         for i in range(len(self.L2.weights)):
             for j in range(len(self.L2.weights[i])):
                 self.L2.weights[i][j] += h
-                new_loss = 0
-                for one_x, one_y in zip(x,y):
-                    new_loss += self.Loss.loss(self.forward(one_x), one_y)
+                new_loss = self.Loss.loss(self.forward(x), y)
                 self.L2.weights_gradients[i][j] = (new_loss - current_loss)/h
                 self.L2.weights[i][j] -= h
     
         for i in range(len(self.L3.weights)):
             for j in range(len(self.L3.weights[i])):
                 self.L3.weights[i][j] += h
-                new_loss = 0
-                for one_x, one_y in zip(x,y):
-                    new_loss += self.Loss.loss(self.forward(one_x), one_y)
+                new_loss = self.Loss.loss(self.forward(x), y)
                 self.L3.weights_gradients[i][j] = (new_loss - current_loss)/h
                 self.L3.weights[i][j] -= h
                             
-        for i in range(len(self.L1.biases)):
-            self.L1.biases[i] += h
-            new_loss = 0
-            for one_x, one_y in zip(x,y):
-                new_loss += self.Loss.loss(self.forward(one_x), one_y)
-            self.L1.biases_gradients[i] = (new_loss - current_loss)/h
-            self.L1.biases[i] -= h
+        # for i in range(len(self.L1.biases)):
+        #     self.L1.biases[i] += h
+        #     new_loss = 0
+        #     for one_x, one_y in zip(x,y):
+        #         new_loss += self.Loss.loss(self.forward(one_x), one_y)
+        #     self.L1.biases_gradients[i] = (new_loss - current_loss)/h
+        #     self.L1.biases[i] -= h
                 
         for i in range(len(self.L2.biases)):
             self.L2.biases[i] += h
-            new_loss = 0
-            for one_x, one_y in zip(x,y):
-                new_loss += self.Loss.loss(self.forward(one_x), one_y)
+            new_loss = self.Loss.loss(self.forward(x), y)
             self.L2.biases_gradients[i] = (new_loss - current_loss)/h
             self.L2.biases[i] -= h
 
         for i in range(len(self.L3.biases)):
             self.L3.biases[i] += h
-            new_loss = 0
-            for one_x, one_y in zip(x,y):
-                new_loss += self.Loss.loss(self.forward(one_x), one_y)
+            new_loss = self.Loss.loss(self.forward(x), y)
             self.L3.biases_gradients[i] = (new_loss - current_loss)/h
             self.L3.biases[i] -= h
 
-        self.L1.weights -= self.L1.weights_gradients*self.learning_rate        
-        # self.L2.weights -= self.L2.weights_gradients*self.learning_rate
+        # self.L1.weights -= self.L1.weights_gradients*self.learning_rate        
+        self.L2.weights -= self.L2.weights_gradients*self.learning_rate
         self.L3.weights -= self.L3.weights_gradients*self.learning_rate
         
-        self.L1.biases  -= self.L1.biases_gradients*self.learning_rate
-        # self.L2.biases  -= self.L2.biases_gradients*self.learning_rate
+        # self.L1.biases  -= self.L1.biases_gradients*self.learning_rate
+        self.L2.biases  -= self.L2.biases_gradients*self.learning_rate
         self.L3.biases  -= self.L3.biases_gradients*self.learning_rate
 
         return current_loss
@@ -159,13 +172,12 @@ class Linear():
     #for each feature in 'x' multiply by relevant weights and add up, then and bias
 
         #numpy vectorization        
-        output  = np.dot(self.weights.T, x) + self.biases
-
-        # output = np.zeros(self.features_out)
-        # for outgoing in range(self.features_out):
-        #     for arriving, _ in enumerate(x):
-        #         output[outgoing] += x[arriving] * self.weights[arriving, outgoing]    
-        #     output[outgoing] += self.biases[outgoing]      
+        # output  = np.dot(self.weights.T, x) + self.biases
+        output = np.zeros(self.features_out)
+        for outgoing in range(self.features_out):
+            for arriving, _ in enumerate(x):
+                output[outgoing] += x[arriving] * self.weights[arriving, outgoing]    
+            output[outgoing] += self.biases[outgoing]      
         
         self.node_values = output
         

@@ -12,16 +12,15 @@ def main():
     target = target_data(shape=32,coverage=75,plot_flag=True)
     # plt.savefig(f"target_data.png",)
     # return
-    
     model = nn.Model()
 
     t1 = time.time()
     
     batch_size = 16
 
-    for epoch in range(1,1000):
+    for epoch in range(100):
         
-        if epoch%10 == 0:
+        if epoch%1 == 0:
             plt.figure(num=2,figsize=(5, 5))
             show_prediction(shape=32,model=model)
 
@@ -29,20 +28,19 @@ def main():
 
         shuffle(target)
 
-        inputx = []
-        inputy = []
+        # inputx = []
+        # inputy = []
 
-        for t_counter, t in enumerate(target):
-            
-            inputx.append([t[0],t[1]])
-            inputy.append(t[2])
+        for t in target:
+            running_loss = model.backprop_gradients([t[0],t[1]],t[2])
+            # running_loss = model.train([t[0],t[1]],t[2])
 
-            if t_counter % batch_size == 0 and t_counter > 0:
-                running_loss = model.train(inputx,inputy)
-                
         print(running_loss)
-        inputx = []
-        inputy = []
+        #     inputx.append([t[0],t[1]])
+        #     inputy.append(t[2])
+                
+        # inputx = []
+        # inputy = []
 
     print(time.time()-t1)
 
