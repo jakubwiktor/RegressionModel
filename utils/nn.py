@@ -5,7 +5,7 @@ class Model():
     
     #general model class which contains netork architecture and forwad and train calls given 'x' as datapoint. Train functionn will update weights of each layer.
 
-    def __init__(self, num_layers = 3, num_features = [0,2,32,2]):
+    def __init__(self, num_layers = 3, num_features = [0,2,64,2]):
 
         #define netowork architecture and layers        
         

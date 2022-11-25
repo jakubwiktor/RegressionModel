@@ -9,7 +9,9 @@ from utils import nn
 def main():
 
     # plt.figure(num=1,figsize=(5, 5))
+    
     target = target_data(shape=32,coverage=75,plot_flag=False)
+    
     # plt.savefig(f"target_data.png",)
     # return
     model = nn.Model()
@@ -17,13 +19,17 @@ def main():
     t1 = time.time()
     
     batch_size = 4
+    
+    shuffle(target)
+
+    target_plot = target[0:int(len(target)/5)]
 
     for epoch in range(1000):
         
         plt.figure(num=2,figsize=(5, 5))
-        show_prediction(shape=32,model=model,target=target)
+        show_prediction(shape=32,model=model,target=target_plot)
 
-        plt.savefig(f"{epoch}.png",)
+        # plt.savefig(f"{epoch}.png",)
 
         shuffle(target)
 
@@ -69,7 +75,7 @@ def show_prediction(shape,model,scaling=1,target=[]):
         else:
             cmap[int(y*shape*scaling),int(x*shape*scaling)] = 0
     
-    plt.imshow(np.flipud(cmap),cmap='jet', vmin=0, vmax=1,alpha=0.5)
+    plt.imshow((cmap),cmap='jet', vmin=0, vmax=1,alpha=0.75)
 
     #also plot target
     for x,y,z in target:
@@ -77,6 +83,7 @@ def show_prediction(shape,model,scaling=1,target=[]):
             plt.plot(x*shape,y*shape,'ro',markeredgecolor='k',markersize=4)
         else:
             plt.plot(x*shape,y*shape,'bo',markeredgecolor='k',markersize=4)
+
     plt.pause(0.01)
 
 def target_data(shape:int, coverage:int, plot_flag:bool) -> list:
@@ -100,18 +107,18 @@ def target_data(shape:int, coverage:int, plot_flag:bool) -> list:
     
 
     # # compute 'soft' sigmoidal boundary for class assignment, class is a 2 component vector
-    # for xy in res:
-    #     if xy[1] < 0.25*np.sin(16*xy[0]) - xy[0] + 1:
-    #         xy.append([1,0])
-    #     else:
-    #         xy.append([0,1])
+    for xy in res:
+        if xy[1] < 0.25*np.sin(16*xy[0]) - xy[0] + 1:
+            xy.append([1,0])
+        else:
+            xy.append([0,1])
 
     # circle
-    for xy in res:
-        if np.sqrt((xy[0]-0.5)**2 + (xy[1]-0.5)**2) < 0.3:
-            xy.append(np.array([1,0],dtype=np.float64))
-        else:
-            xy.append(np.array([0,1],dtype=np.float64))
+    # for xy in res:
+    #     if np.sqrt((xy[0]-0.5)**2 + (xy[1]-0.5)**2) < 0.3:
+    #         xy.append(np.array([1,0],dtype=np.float64))
+    #     else:
+    #         xy.append(np.array([0,1],dtype=np.float64))
 
     # just line
     # for xy in res:
