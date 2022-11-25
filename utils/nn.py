@@ -22,8 +22,8 @@ class Model():
         
         # out = self.L1.run(x)
         # out = self.Activation.RelU(out)
-        out =  self.Activation.RelU(self.L2.run(x))
-        # out = self.Activation.RelU(out)
+        out = self.L2.run(x)
+        out = self.Activation.RelU(out)
         out = self.L3.run(out)
         # out = self.Activation.Sigmoid(out)
 
