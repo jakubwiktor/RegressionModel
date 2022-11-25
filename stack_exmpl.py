@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 # N is batch size(sample size); D_in is input dimension;
 # H is hidden dimension; D_out is output dimension.
-N, D_in, H, D_out = 4, 2, 30, 1
+N, D_in, H, D_out = 1, 2, 30, 1
 
 # Create random input and output data
 x = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])

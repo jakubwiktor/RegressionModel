@@ -8,43 +8,49 @@ from utils import nn
 
 def main():
 
-    plt.figure(num=1,figsize=(5, 5))
-    target = target_data(shape=32,coverage=75,plot_flag=True)
+    # plt.figure(num=1,figsize=(5, 5))
+    target = target_data(shape=32,coverage=75,plot_flag=False)
     # plt.savefig(f"target_data.png",)
     # return
     model = nn.Model()
 
     t1 = time.time()
     
-    batch_size = 16
+    batch_size = 4
 
-    for epoch in range(100):
+    for epoch in range(1000):
         
-        if epoch%1 == 0:
-            plt.figure(num=2,figsize=(5, 5))
-            show_prediction(shape=32,model=model)
+        plt.figure(num=2,figsize=(5, 5))
+        show_prediction(shape=32,model=model,target=target)
 
-            # plt.savefig(f"{epoch}.png",)
+        plt.savefig(f"{epoch}.png",)
 
         shuffle(target)
 
-        # inputx = []
-        # inputy = []
-
+        inputx = []
+        inputy = []
+        counter = 0
+        epoch_loss = 0
         for t in target:
-            running_loss = model.backprop_gradients([t[0],t[1]],t[2])
-            # running_loss = model.train([t[0],t[1]],t[2])
+            if counter == batch_size-1:
+                running_loss = model.backprop_gradients(inputx,inputy)
+                # running_loss = model.train(inputx,inputy)
+                inputx = []
+                inputy = []
+                counter = 0
+                epoch_loss+=running_loss
+            inputx.append([t[0],t[1]])
+            inputy.append(t[2])
+            counter += 1
+        print(epoch_loss)
+            
 
-        print(running_loss)
-        #     inputx.append([t[0],t[1]])
-        #     inputy.append(t[2])
-                
-        # inputx = []
-        # inputy = []
+        inputx = []
+        inputy = []
 
     print(time.time()-t1)
 
-def show_prediction(shape, model,scaling=1):
+def show_prediction(shape,model,scaling=1,target=[]):
     
     plt.clf()
 
@@ -63,7 +69,14 @@ def show_prediction(shape, model,scaling=1):
         else:
             cmap[int(y*shape*scaling),int(x*shape*scaling)] = 0
     
-    plt.imshow(np.flipud(cmap))
+    plt.imshow(np.flipud(cmap),cmap='jet', vmin=0, vmax=1,alpha=0.5)
+
+    #also plot target
+    for x,y,z in target:
+        if z[0] == 1:
+            plt.plot(x*shape,y*shape,'ro',markeredgecolor='k',markersize=4)
+        else:
+            plt.plot(x*shape,y*shape,'bo',markeredgecolor='k',markersize=4)
     plt.pause(0.01)
 
 def target_data(shape:int, coverage:int, plot_flag:bool) -> list:
@@ -94,25 +107,25 @@ def target_data(shape:int, coverage:int, plot_flag:bool) -> list:
     #         xy.append([0,1])
 
     # circle
-    # for xy in res:
-    #     if np.sqrt((xy[0]-0.3)**2 + (xy[1]-0.3)**2) < 0.3:
-    #         xy.append(np.array([1,0],dtype=np.float64))
-    #     else:
-    #         xy.append(np.array([0,1],dtype=np.float64))
-
-    # just line
     for xy in res:
-        if xy[1] > xy[0] + 0.1:
+        if np.sqrt((xy[0]-0.5)**2 + (xy[1]-0.5)**2) < 0.3:
             xy.append(np.array([1,0],dtype=np.float64))
         else:
             xy.append(np.array([0,1],dtype=np.float64))
+
+    # just line
+    # for xy in res:
+    #     if xy[1] > xy[0]**3 + 0.1:
+    #         xy.append(np.array([1,0],dtype=np.float64))
+    #     else:
+    #         xy.append(np.array([0,1],dtype=np.float64))
 
     if plot_flag:
         for x,y,z in res:
             if z[0] == 1:
                 plt.plot(x,y,'ro')
             else:
-                plt.plot(x,y,'go')
+                plt.plot(x,y,'bo')
 
         plt.show(block=False)
     plt.pause(1)
