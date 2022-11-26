@@ -115,7 +115,7 @@ def target_data(shape:int, coverage:int, plot_flag:bool) -> list:
 
     # circle
     # for xy in res:
-    #     if np.sqrt((xy[0]-0.5)**2 + (xy[1]-0.5)**2) < 0.3:
+    #     if np.sqrt((xy[0]-0.7)**2 + (xy[1]-0.7)**2) < 0.2 or np.sqrt((xy[0]-0.2)**2 + (xy[1]-0.2)**2) < 0.2:
     #         xy.append(np.array([1,0],dtype=np.float64))
     #     else:
     #         xy.append(np.array([0,1],dtype=np.float64))

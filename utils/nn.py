@@ -5,14 +5,14 @@ class Model():
     
     #general model class which contains netork architecture and forwad and train calls given 'x' as datapoint. Train functionn will update weights of each layer.
 
-    def __init__(self, num_layers = 3, num_features = [0,2,64,2]):
+    def __init__(self, num_layers = 3, num_features = [2,128,64,2]):
 
         #define netowork architecture and layers        
         
         self.Activation = Activation()
         self.Loss = Loss()
-
-        # self.L1 = Linear(features_in=num_features[0], features_out=num_features[1]) #first + hidden
+ 
+        self.L1 = Linear(features_in=num_features[0], features_out=num_features[1]) #first + hidden
         self.L2 = Linear(features_in=num_features[1], features_out=num_features[2]) #hidden
         self.L3 = Linear(features_in=num_features[2], features_out=num_features[3]) #output
 
@@ -20,9 +20,9 @@ class Model():
 
     def forward(self,x):
         
-        # out = self.L1.run(x)
-        # out = self.Activation.RelU(out)
-        out = self.L2.run(x)
+        out = self.L1.run(x)
+        out = self.Activation.RelU(out)
+        out = self.L2.run(out)
         out = self.Activation.RelU(out)
         out = self.L3.run(out)
         # out = self.Activation.Sigmoid(out)
@@ -36,6 +36,8 @@ class Model():
         self.L3.biases_gradients = np.zeros(self.L3.features_out)
         self.L2.weights_gradients = np.zeros((self.L2.features_in, self.L2.features_out))
         self.L2.biases_gradients = np.zeros(self.L2.features_out)
+        self.L1.weights_gradients = np.zeros((self.L1.features_in, self.L1.features_out))
+        self.L1.biases_gradients = np.zeros(self.L1.features_out)
         
         for tx, ty in zip(x, y):
             #THIS LOOKS GOOD - SO WHAT IS WRONG?!?!
@@ -44,30 +46,52 @@ class Model():
 
             cost_derivative = 2*(pred-ty) #get derivative of the cost
 
-            L2_node_derivative = np.zeros(self.L2.features_out) #compute cost of previous node in same loop
-            for i in range(len(self.L3.weights)):
-                for j in range(len(self.L3.weights[i])): 
-                    self.L3.weights_gradients[i][j] += self.L3.inputs[i]      * cost_derivative[j]
-                    L2_node_derivative[i]           += self.L3.weights[i][j]  * cost_derivative[j]
+            # L2_node_derivative = np.zeros(self.L2.features_out) #compute cost of previous node in same loop
+            # for i in range(len(self.L3.weights)):
+            #     for j in range(len(self.L3.weights[i])): 
+            #         self.L3.weights_gradients[i][j] += self.L3.inputs[i]      * cost_derivative[j]
+            #         # L2_node_derivative[i]           += self.L3.weights[i][j]  * cost_deri
+            self.L3.weights_gradients += np.array([self.L3.inputs]).T.dot([cost_derivative])
             
-            for i in range(len(self.L3.biases)):
-                self.L3.biases_gradients[i] += cost_derivative[i]
+            # for i in range(len(self.L3.biases)):
+            #     self.L3.biases_gradients[i] += cost_derivative[i]
+            
+            self.L3.biases_gradients += cost_derivative
 
-            tmp = [1 if x > 0 else 0 for x in self.L2.outputs]
+            L2_node_derivative = np.dot(self.L3.weights,cost_derivative)
+            tmp = [1 if x > 0 else 0 for x in self.L2.outputs] #relU
             L2_node_derivative *= tmp
-            # L2_node_derivative[self.L2.outputs<0]=0 #the chain rule
 
-            for i in range(len(self.L2.weights)):
-                for j in range(len(self.L2.weights[i])): 
-                    self.L2.weights_gradients[i][j] += self.L2.inputs[i] * L2_node_derivative[j]
+            # L1_node_derivative = np.zeros(self.L1.features_out) #compute cost of previous node in same loop
+            # for i in range(len(self.L2.weights)):
+            #     for j in range(len(self.L2.weights[i])): 
+            #         self.L2.weights_gradients[i][j] += self.L2.inputs[i] * L2_node_derivative[j]
+                    # L1_node_derivative[i]           += self.L2.weights[i][j]  * L2_node_derivative[j]
+            self.L2.weights_gradients += np.array([self.L2.inputs]).T.dot([L2_node_derivative])
+            
+            L1_node_derivative = np.dot(self.L2.weights,L2_node_derivative)
+            tmp = [1 if x > 0 else 0 for x in self.L1.outputs]
+            L1_node_derivative *= tmp
 
-            for i in range(len(self.L2.biases)):
-                self.L2.biases_gradients[i] += L2_node_derivative[i]
+            # for i in range(len(self.L2.biases)):
+            #     self.L2.biases_gradients[i] += L2_node_derivative[i]
+            self.L2.biases_gradients += L2_node_derivative
+
+            # for i in range(len(self.L1.weights)):
+            #     for j in range(len(self.L1.weights[i])): 
+            #         self.L1.weights_gradients[i][j] += self.L1.inputs[i] * L1_node_derivative[j]
+            self.L1.weights_gradients += np.array([self.L1.inputs]).T.dot([L1_node_derivative])
+
+            # for i in range(len(self.L1.biases)):
+            #     self.L1.biases_gradients[i] += L1_node_derivative[i]
+            self.L1.biases_gradients += L1_node_derivative
 
         self.L3.weights -= self.L3.weights_gradients * self.learning_rate
         self.L3.biases  -= self.L3.biases_gradients  * self.learning_rate
         self.L2.weights -= self.L2.weights_gradients * self.learning_rate
         self.L2.biases  -= self.L2.biases_gradients  * self.learning_rate
+        self.L1.weights -= self.L1.weights_gradients * self.learning_rate
+        self.L1.biases  -= self.L1.biases_gradients  * self.learning_rate
 
         return np.square(pred-ty).sum()
     
@@ -189,17 +213,14 @@ class Activation():
         pass
 
     def RelU(self,x): 
-        return [y if y > 0 else 0 for y in x]
-        # return np.maximum(0,x)
+        # return [y if y > 0 else 0 for y in x]
+        return np.maximum(0,x)
     
     def Sigmoid(self,x):
         return 1/(1+np.exp(-x))
 
     def TanH(self,x):
-        res=[]
-        for r in x:
-            res.append((np.exp(r) - np.exp(-r)) / (np.exp(r) + np.exp(-r)))
-        return res
+        return (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x))
 
 class Loss():
     #define loss function for neural netowrk
